@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.1.final using JasperReports Library version 6.3.1  -->
+<!-- 2017-11-22T11:23:25 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Plan Prévisionnel de Fumure avec détail du calcul" pageWidth="842" pageHeight="595" orientation="Landscape" whenNoDataType="AllSectionsNoDetail" columnWidth="782" leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20" uuid="d4897a84-907c-44f1-a694-0d03371a15f7">
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<property name="ireport.jasperserver.reportUnit" value="/MES_PARCELLES/indicateur/PL_reliquat_azote_post_recolte"/>
+	<property name="ireport.jasperserver.url" value="http://172.24.12.203:8080/jasperserver/"/>
+	<property name="ireport.zoom" value="3.0"/>
+	<property name="ireport.x" value="1804"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.jasperserver.user" value="jasperadmin"/>
+	<property name="ireport.jasperserver.report.resource" value="/MES_PARCELLES/indicateur/PL_reliquat_azote_post_recolte_files/PL_reliquat_azote_post_recolte_jrxml"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="BDSOL PROD"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="0"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="1000"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="FR_idexploitation" class="java.lang.Integer"/>
+	<parameter name="FR_millesime" class="java.lang.Integer"/>
+	<parameter name="type" class="java.lang.String" isForPrompting="false"/>
+	<parameter name="choix" class="java.util.Collection" isForPrompting="false"/>
+	<parameter name="LoggedInUsername" class="java.lang.String" isForPrompting="false"/>
+	<queryString>
+		<![CDATA[SELECT  i.numero AS ilotnumero, p.nom AS parcellenom, p.surfacesaisie AS parcellesurface, c.libelleusage AS culture,  c.uniterendement,
+tse.libelle as variete,
+f.objectifrendement::integer,
+dn5exrc.valeur  as  besoinprevu,
+ f.rendementnobtenu::integer,
+round ( (CASE WHEN ref_variete.nabsrdt is not null and  ref_variete.nabsforfait is null then f.rendementnobtenu*ref_variete.nabsrdt
+WHEN rpf5.nabsrdt IS NOT NULL and rmsc.cof is null THEN f.rendementnobtenu*rpf5.nabsrdt
+WHEN rpf5.nabsrdt IS NOT NULL and rmsc.cof is NOT null THEN  (f.rendementnobtenu*rpf5.nabsrdt)/rmsc.cof
+WHEN ref_variete.nabsrdt is null and rpf5.nabsrdt IS null THEN  f.rendementnobtenu*ref_culture.nabsrdt
+ELSE ref_culture.nabsforfait END)::numeric,0)+dn5excp_rf.valeur as  besoinreal,
+
+dn5exrc.valeur-
+(round ( (CASE WHEN ref_variete.nabsrdt is not null and  ref_variete.nabsforfait is null then f.rendementnobtenu*ref_variete.nabsrdt
+WHEN rpf5.nabsrdt IS NOT NULL and rmsc.cof is null THEN f.rendementnobtenu*rpf5.nabsrdt
+WHEN rpf5.nabsrdt IS NOT NULL and rmsc.cof is NOT null THEN  (f.rendementnobtenu*rpf5.nabsrdt)/rmsc.cof
+WHEN ref_variete.nabsrdt is null and rpf5.nabsrdt IS null THEN  f.rendementnobtenu*ref_culture.nabsrdt
+ELSE ref_culture.nabsforfait END)::numeric,0)+dn5excp_rf.valeur)
+as ecartazoteexporte,
+
+coalesce(nmin.nmin,0)+ coalesce(norga.norga,0) as napportprevu,
+coalesce(nminreal.nmin,0) as apportminreal,
+coalesce(norgareal.norga,0) as apportorgareal,
+coalesce(nminreal.nmin,0)+ coalesce(norgareal.norga,0) as napportreal,
+round (((coalesce(nmin.nmin,0)+ coalesce(norga.norga,0))-(coalesce(nminreal.nmin,0)+ coalesce(norgareal.norga,0))),0) as ecartapport,
+round ((coalesce(dn5exrc.valeur,0)-
+coalesce(round ( ((CASE WHEN ref_variete.nabsrdt is not null and  ref_variete.nabsforfait is null then f.rendementnobtenu*ref_variete.nabsrdt
+WHEN rpf5.nabsrdt IS NOT NULL and rmsc.cof is null THEN f.rendementnobtenu*rpf5.nabsrdt
+WHEN rpf5.nabsrdt IS NOT NULL and rmsc.cof is NOT null THEN  (f.rendementnobtenu*rpf5.nabsrdt)/rmsc.cof
+WHEN ref_variete.nabsrdt is null and rpf5.nabsrdt IS null THEN  f.rendementnobtenu*ref_culture.nabsrdt
+ELSE ref_culture.nabsforfait END)+dn5excp_rf.valeur)::numeric,0),0) -
+((coalesce(nmin.nmin,0)+ coalesce(norga.norga,0))-(coalesce(nminreal.nmin,0)+ coalesce(norgareal.norga,0))))::numeric,0) as reliquat, ( $P{FR_millesime}-1) as millesimeprec
+
+
+FROM tparcellesculturales p
+left join tparcellesculturales pprec on pprec.idparcelleculturale=p.idparcellemeremillesimeprec and pprec.millesime = p.millesime-1
+left JOIN tilots i on i.idilot=p.idilot
+LEFT JOIN tcultures c ON c.idculture=pprec.idculture
+LEFT JOIN gfparcelle f ON f.idparcelleculturale = pprec.idparcelleculturale
+left join tcomposantparcelleculturale tcpcv ON tcpcv.idparcelleculturale = pprec.idparcelleculturale and idcomposantdynamique = 1
+left join expsemence exps on exps.idexpsemence = tcpcv.valeur::integer
+LEFT JOIN tsemence tse using (idsemence)
+left join dn5.ref_variete on ref_variete.codegnis=tse.codegnis and ref_variete.millesime = pprec.millesime and ref_variete.identite =17
+LEFT JOIN dn5.ref_cultureaffectation on pprec.idculture = ref_cultureaffectation.idculture
+left join dn5.ref_culture using (idrefculture)
+left join dn5.ref_pf5 rpf5 on rpf5.idrefculture = ref_culture.idrefculture and rpf5.objrdtmin <= f.objectifrendement and rpf5.objrdtmax > f.objectifrendement
+LEFT JOIN dn5.exp_calcul dn5exc ON (dn5exc.idparcelleculturale = pprec.idparcelleculturale)
+left join dn5.exp_regroupementcalcul dn5exrc ON dn5exrc.idexpcalcul = dn5exc.idexpcalcul and idgenregroupementposte = 1
+LEFT JOIN dn5.exp_calculposte dn5excp_pf ON (
+    dn5excp_pf.idexpcalcul = dn5exc.idexpcalcul
+    AND dn5excp_pf.idgenposte IN (SELECT idgenposte FROM dn5.gen_poste WHERE clefposte = '__Pf__'))
+
+LEFT JOIN dn5.exp_calculposte dn5excp_rf ON (
+    dn5excp_rf.idexpcalcul = dn5exc.idexpcalcul
+    AND dn5excp_rf.idgenposte IN (SELECT idgenposte FROM dn5.gen_poste WHERE clefposte = '__Rf__'))
+LEFT JOIN dn5.exp_calcul n on n.idparcelleculturale =pprec.idparcelleculturale
+left join tcomposantparcelleculturale on tcomposantparcelleculturale.idparcelleculturale = pprec.idparcelleculturale 
+and tcomposantparcelleculturale.idcomposantdynamique = (select idcomposantdynamique from tcomposantdynamique  where codenational = 'DN5_ID_REF_MAIS_SEMENCE_COF')
+left join dn5.ref_maissemencecof rmsc on tcomposantparcelleculturale.valeur::integer= rmsc.idrefmaissemencecof
+LEFT JOIN (SELECT tpc.idparcelleculturale,sum(vinm.valeur::numeric) AS nmin
+    FROM tevenement te
+    JOIN tparcellesculturales tpc ON te.idparcelleculturale = tpc.idparcelleculturale
+    INNER JOIN tintrantextrantevenement tiee ON (tiee.idevenement = te.idevenement)
+    JOIN expfertimin efm ON efm.idexpfertimin = tiee.idintrantextrant
+    JOIN tattributevenement vip ON (
+      vip.idevenement = te.idevenement
+      AND vip.idattribut = ANY (ARRAY[1, 2])
+    )
+    JOIN gfperiode gp ON gp.idgfperiode::text = vip.valeur::text
+    JOIN tattributevenement via ON (
+      via.idevenement = te.idevenement
+      AND via.idattribut = ANY (ARRAY[4,5])
+    )
+    JOIN tattributintrantextrant vinm ON (
+      vinm.idintrantextrantevenement = tiee.idintrantextrantevenement
+      AND vinm.idattribut = 10
+    )
+    WHERE te.etat = 0
+      AND te.idtypeevenement = 1 and
+tpc.idexploitation=$P{FR_idexploitation} AND tpc.millesime=$P{FR_millesime}-1
+
+      group by tpc.idparcelleculturale) nmin ON nmin.idparcelleculturale = pprec.idparcelleculturale
+LEFT JOIN (SELECT tpc.idparcelleculturale,sum(vine.valeur::numeric) AS norga
+    FROM tevenement te
+    JOIN tparcellesculturales tpc ON te.idparcelleculturale = tpc.idparcelleculturale
+    INNER JOIN tintrantextrantevenement tiee ON (tiee.idevenement = te.idevenement)
+    JOIN expfertiorg efo ON efo.idexpfertiorg = tiee.idintrantextrant
+    JOIN tattributevenement vip ON (
+      vip.idevenement = te.idevenement
+      AND vip.idattribut = ANY (ARRAY[1, 2])
+    )
+    JOIN gfperiode gp ON gp.idgfperiode::text = vip.valeur::text
+    JOIN tattributevenement via ON (
+      via.idevenement = te.idevenement
+      AND via.idattribut = ANY (ARRAY[4,5])
+    )
+    JOIN tattributintrantextrant vine ON (
+      vine.idintrantextrantevenement = tiee.idintrantextrantevenement
+      AND vine.idattribut = 3
+    )
+    WHERE te.etat = 0
+      AND te.idtypeevenement = 2 and
+tpc.idexploitation=$P{FR_idexploitation} AND tpc.millesime=$P{FR_millesime}-1
+
+      group by tpc.idparcelleculturale) norga ON norga.idparcelleculturale = pprec.idparcelleculturale
+
+
+LEFT JOIN (SELECT tpc.idparcelleculturale,sum(vinm.valeur::numeric) AS nmin
+    FROM tevenement te
+    JOIN tparcellesculturales tpc ON te.idparcelleculturale = tpc.idparcelleculturale
+    INNER JOIN tintrantextrantevenement tiee ON (tiee.idevenement = te.idevenement)
+    JOIN expfertimin efm ON efm.idexpfertimin = tiee.idintrantextrant
+
+    JOIN tattributintrantextrant vinm ON (
+      vinm.idintrantextrantevenement = tiee.idintrantextrantevenement
+      AND vinm.idattribut = 10
+    )
+    WHERE te.etat = 1
+      AND te.idtypeevenement = 1 and
+tpc.idexploitation=$P{FR_idexploitation} AND tpc.millesime=$P{FR_millesime}-1
+
+      group by tpc.idparcelleculturale) nminreal ON nminreal.idparcelleculturale = pprec.idparcelleculturale
+LEFT JOIN (SELECT tpc.idparcelleculturale,sum(vine.valeur::numeric) AS norga
+    FROM tevenement te
+    JOIN tparcellesculturales tpc ON te.idparcelleculturale = tpc.idparcelleculturale
+    INNER JOIN tintrantextrantevenement tiee ON (tiee.idevenement = te.idevenement)
+    JOIN expfertiorg efo ON efo.idexpfertiorg = tiee.idintrantextrant
+
+    JOIN tattributintrantextrant vine ON (
+      vine.idintrantextrantevenement = tiee.idintrantextrantevenement
+      AND vine.idattribut = 3
+    )
+    WHERE te.etat = 1
+      AND te.idtypeevenement = 2 and
+tpc.idexploitation=$P{FR_idexploitation} AND tpc.millesime=$P{FR_millesime}-1
+      group by tpc.idparcelleculturale) norgareal ON norgareal.idparcelleculturale = pprec.idparcelleculturale
+
+
+WHERE p.idexploitation=$P{FR_idexploitation} 
+AND p.millesime=$P{FR_millesime}
+and p.idcultureintermediaire is not null
+
+ORDER BY 1, p.numero, 2]]>
+	</queryString>
+	<field name="ilotnumero" class="java.lang.Integer"/>
+	<field name="parcellenom" class="java.lang.String"/>
+	<field name="parcellesurface" class="java.lang.Float"/>
+	<field name="culture" class="java.lang.String"/>
+	<field name="uniterendement" class="java.lang.String"/>
+	<field name="variete" class="java.lang.String"/>
+	<field name="objectifrendement" class="java.lang.Integer"/>
+	<field name="besoinprevu" class="java.lang.Double"/>
+	<field name="rendementnobtenu" class="java.lang.Integer"/>
+	<field name="besoinreal" class="java.lang.Double"/>
+	<field name="ecartazoteexporte" class="java.lang.Double"/>
+	<field name="napportprevu" class="java.math.BigDecimal"/>
+	<field name="apportminreal" class="java.math.BigDecimal"/>
+	<field name="apportorgareal" class="java.math.BigDecimal"/>
+	<field name="napportreal" class="java.math.BigDecimal"/>
+	<field name="ecartapport" class="java.math.BigDecimal"/>
+	<field name="reliquat" class="java.math.BigDecimal"/>
+	<field name="millesimeprec" class="java.lang.Integer"/>
+	<pageHeader>
+		<band height="52">
+			<staticText>
+				<reportElement key="textField-9" style="titre_edition" positionType="Float" mode="Transparent" x="130" y="0" width="453" height="50" isPrintWhenDetailOverflows="true" uuid="2fff7009-d19a-4744-95e3-bb065ee80e41"/>
+				<textElement verticalAlignment="Middle" markup="none"/>
+				<text><![CDATA[Calcul du reliquat azote post récolte des cultures précédentes
+(annexe 2F)]]></text>
+			</staticText>
+			<textField>
+				<reportElement key="textField-9" style="sous_titre_edition" positionType="FixRelativeToBottom" mode="Transparent" x="419" y="33" width="164" height="18" uuid="576499c8-3262-4656-9b55-81f30a4106de"/>
+				<box bottomPadding="0" rightPadding="6"/>
+				<textElement textAlignment="Right" verticalAlignment="Bottom" markup="none"/>
+				<textFieldExpression><![CDATA["Année de récolte "+ $P{FR_millesime}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement style="titre_edition" positionType="FixRelativeToBottom" x="130" y="51" width="652" height="1" uuid="429b1a38-45d6-40fe-9398-c208a5ef7235"/>
+			</line>
+			<image scaleImage="RealSize">
+				<reportElement x="0" y="0" width="126" height="50" uuid="b5b06c6e-22ba-4f9d-8275-ab8dea7e6fad"/>
+				<imageExpression><![CDATA["repo:/images/logo/logoMesParcelles_l.jpeg"]]></imageExpression>
+			</image>
+			<subreport isUsingCache="true">
+				<reportElement key="subreport-3" x="583" y="0" width="199" height="50" uuid="7a449c1d-79ba-4897-8c0f-366c2477e7a9"/>
+				<subreportParameter name="idexploit">
+					<subreportParameterExpression><![CDATA[$P{FR_idexploitation}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA["repo:/reports/tete_pied/sub_exploit_FR"]]></subreportExpression>
+			</subreport>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="91">
+			<staticText>
+				<reportElement style="entete_tableau" x="0" y="5" width="23" height="86" uuid="123a963e-8d1f-4e4d-9d04-a794f3f75f33"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[N°
+Ilot]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="136" y="5" width="37" height="86" uuid="fe78649a-29a7-4122-89c2-c816945b9d0f"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="Left">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Surface]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="273" y="5" width="37" height="86" uuid="df9892e8-4d9f-437a-a5ad-2a5125cd0b4b"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="Left">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Rendement objectif]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="310" y="5" width="33" height="86" uuid="43a484b5-5763-4b3b-8b8e-2427dc1986f3"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="Left">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Besoin en Azote prévu]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="343" y="5" width="37" height="86" uuid="4ed20601-55c2-4bfb-bb7b-6a12a046bfd9"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="Left">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Rendement
+réalisé]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="380" y="5" width="33" height="86" uuid="96ff8f99-0ea3-4f80-aa27-88b94db6773b"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="Left">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Azote consommé par la culture]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="413" y="5" width="49" height="86" uuid="80e1f6fb-3a6d-45ab-a597-07cb04d4c1ab"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Ecart azote exporté]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="462" y="5" width="35" height="86" uuid="2d05c045-8c77-4cd0-b6bd-eb04d04b5aef"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="Left">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Dose azote total prévu]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="497" y="5" width="45" height="86" uuid="d4b09e79-bc8e-4c58-909d-fb20cc250f65"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="Left">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Dose azote minérale apportée]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="542" y="5" width="45" height="86" uuid="2ee4883e-2e45-402b-b99a-ac00da7b245a"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="Left">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Dose azote organique apportée]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="587" y="5" width="45" height="86" uuid="3bdf4b69-97aa-4824-a867-57c5c051760a"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="Left">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Dose azote efficace total apportée]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="632" y="5" width="56" height="86" uuid="501340dc-ddcb-437d-8e32-0ccb3ea4ec4b"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Ecart azote apportée (prévu - réel)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="entete_tableau" x="688" y="5" width="94" height="86" uuid="dfbcff3f-a642-4187-b737-411696963cf8"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Reliquat potentiel : écart azote exporté - écart azote apporté]]></text>
+			</staticText>
+			<textField>
+				<reportElement style="entete_tableau" x="23" y="5" width="113" height="86" uuid="67b7bf45-5aff-494e-9112-fe8adabb61eb"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Nom de la parcelle "+$P{FR_millesime}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="entete_tableau" x="173" y="5" width="100" height="86" uuid="ff1d90c5-2cfd-45bc-bd5c-8a04b8228f3e"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Culture "+$F{millesimeprec}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="18" splitType="Stretch">
+			<textField>
+				<reportElement style="corps_tableau" x="0" y="0" width="23" height="18" uuid="f5685fe0-5dbb-43cd-badb-afa3ef072ed9"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ilotnumero}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="corps_tableau" x="23" y="0" width="113" height="18" uuid="6a33138d-d465-42bb-9268-facb312bd55a"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{parcellenom}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement style="corps_tableau" x="136" y="0" width="37" height="18" uuid="76f50af0-09b1-4797-a194-fe5de08d166d"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{parcellesurface}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="corps_tableau" x="173" y="0" width="100" height="18" uuid="11a78bbe-f7a9-4d5d-9cf4-7059b83de973"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{culture}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="corps_tableau" x="273" y="0" width="37" height="18" uuid="1fd29ef9-628d-426a-a111-71904b84e8be"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{objectifrendement}.equals(null)) ? null : $F{objectifrendement}+ " " + $F{uniterendement}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0" isBlankWhenNull="true">
+				<reportElement style="corps_tableau" x="310" y="0" width="33" height="18" uuid="ea9faae0-f3ef-4d34-ade1-93a662511974"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{besoinprevu}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="corps_tableau" x="343" y="0" width="37" height="18" uuid="05d1d14c-0175-4b93-8cb2-bf70b7a6cf81"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{rendementnobtenu}.equals(null)) ? null : $F{rendementnobtenu}+ " " + $F{uniterendement}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0" isBlankWhenNull="true">
+				<reportElement style="corps_tableau" x="380" y="0" width="33" height="18" uuid="bc369a37-e521-489a-b4b7-16a1e7de9939"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{besoinreal}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0" isBlankWhenNull="true">
+				<reportElement style="corps_tableau" mode="Opaque" x="413" y="0" width="49" height="18" backcolor="#CCCCCC" uuid="4d3a060f-dc16-4c45-8fb6-eee8225ceb7d"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ecartazoteexporte}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="corps_tableau" x="462" y="0" width="35" height="18" uuid="ed608c4b-1d8c-4de3-a536-08d52f8ee37a"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{napportprevu}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="corps_tableau" x="497" y="0" width="45" height="18" uuid="34157864-736f-449e-a2a0-b27f19777e2b"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{apportminreal}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="corps_tableau" x="542" y="0" width="45" height="18" uuid="759061f5-0da8-477a-a48f-b1391b8741d9"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{apportorgareal}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="corps_tableau" x="587" y="0" width="45" height="18" uuid="e0d0656a-3aa2-4f39-8483-6e494c622f5e"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{napportreal}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="corps_tableau" mode="Opaque" x="632" y="0" width="56" height="18" backcolor="#CCCCCC" uuid="0a09878e-40c2-4dc0-95ff-e6820cce6d54"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ecartapport}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="corps_tableau" mode="Opaque" x="688" y="0" width="94" height="18" backcolor="#CCCCCC" uuid="d13455c0-0f74-43ca-8aaf-b279c646a914"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="html">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<FONT color='"+($F{reliquat}.intValue()>60?"red":"black")+"'>"+$F{reliquat}+"</FONT>"]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="32">
+			<line>
+				<reportElement key="line-1" x="0" y="18" width="743" height="1" uuid="00f596fe-8815-4e3c-811f-56c1749297c3"/>
+			</line>
+			<textField evaluationTime="Report" isBlankWhenNull="false">
+				<reportElement key="textField-12" style="pied_de_page" x="396" y="18" width="43" height="14" uuid="8d47eecd-8c5c-4398-ac91-836bf9306636"/>
+				<box>
+					<topPen lineStyle="Solid"/>
+					<leftPen lineStyle="Solid"/>
+					<bottomPen lineStyle="Solid"/>
+					<rightPen lineStyle="Solid"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["" + $V{PAGE_NUMBER} + ""]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-11" style="pied_de_page" x="342" y="18" width="54" height="14" uuid="c5a7e9e6-3648-47b9-9ae8-b621affc89d3"/>
+				<box>
+					<topPen lineStyle="Solid"/>
+					<leftPen lineStyle="Solid"/>
+					<bottomPen lineStyle="Solid"/>
+					<rightPen lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " / "]]></textFieldExpression>
+			</textField>
+			<image scaleImage="RetainShape" hAlign="Right" vAlign="Middle">
+				<reportElement x="744" y="1" width="38" height="31" uuid="ff44f0cc-5f97-475d-93d3-10a4644f7440"/>
+				<imageExpression><![CDATA["repo:/images/logo/logoAPCA_s.jpeg"]]></imageExpression>
+			</image>
+		</band>
+	</pageFooter>
+</jasperReport>
